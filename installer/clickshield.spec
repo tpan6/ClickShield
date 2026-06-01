@@ -1,9 +1,5 @@
-# PyInstaller spec for ClickShield
-import sys
+# PyInstaller spec for ClickShield — compatible with PyInstaller 6.x
 from pathlib import Path
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
-
-block_cipher = None
 
 # Collect uiautomation data if installed
 uia_datas = []
@@ -58,13 +54,10 @@ a = Analysis(
         'scipy',
         'tkinter',
     ],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
     noarchive=False,
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
@@ -76,15 +69,14 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,        # No console window
-    uac_admin=False,      # No UAC — installs to user profile
+    console=False,
+    uac_admin=False,
     icon='../clickshield/resources/icons/tray_normal.png',
 )
 
 coll = COLLECT(
     exe,
     a.binaries,
-    a.zipfiles,
     a.datas,
     strip=False,
     upx=True,

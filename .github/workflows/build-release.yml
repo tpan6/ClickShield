@@ -6,8 +6,39 @@ on:
       - 'v*'
 
 jobs:
-  build:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            ## Installation
+
+            **Run from source** (Python 3.11+ required):
+            ```powershell
+            pip install -e .
+            python -m clickshield
+            ```
+
+            A Windows installer (`.exe`) can be built locally with:
+            ```powershell
+            pip install -e ".[build]"
+            .\installer\build.ps1
+            ```
+
+            See [README](https://github.com/tpan6/ClickShield#readme) for full setup instructions.
+
+  build-windows:
     runs-on: windows-latest
+    needs: release
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -21,14 +52,7 @@ jobs:
       - name: Build with PyInstaller
         run: pyinstaller installer/clickshield.spec --noconfirm
 
-      - name: Upload portable build
-        uses: actions/upload-artifact@v4
-        with:
-          name: ClickShield-portable
-          path: dist/ClickShield/
-
-      - name: Create GitHub Release
+      - name: Upload exe to release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/ClickShield/ClickShield.exe
-          generate_release_notes: true
