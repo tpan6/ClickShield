@@ -40,7 +40,7 @@ def test_threat_result_error_factory():
 
 
 class TestThreatSuppressor:
-    def _make_result(self, severity=7, threat_type="phishing"):
+    def _make_result(self, severity=5, threat_type="phishing"):
         return ThreatResult(
             severity=severity,
             threat_type=threat_type,
@@ -61,9 +61,15 @@ class TestThreatSuppressor:
 
     def test_second_occurrence_suppressed(self):
         sup = ThreatSuppressor()
-        r = self._make_result()
+        r = self._make_result()  # MEDIUM — should be suppressed on repeat
         sup.should_suppress(r, "https://evil.com")
         assert sup.should_suppress(r, "https://evil.com") is True
+
+    def test_high_severity_never_suppressed(self):
+        sup = ThreatSuppressor()
+        r = self._make_result(severity=9)  # HIGH — never suppressed
+        sup.should_suppress(r, "https://evil.com")
+        assert sup.should_suppress(r, "https://evil.com") is False
 
     def test_different_url_not_suppressed(self):
         sup = ThreatSuppressor()

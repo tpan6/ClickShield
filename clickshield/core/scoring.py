@@ -78,6 +78,9 @@ class ThreatSuppressor:
     def should_suppress(self, result: ThreatResult, url: str | None) -> bool:
         if result.level == ThreatLevel.CLEAN:
             return True
+        # Never suppress HIGH severity — keep warning until the user leaves the page
+        if result.level == ThreatLevel.HIGH:
+            return False
         key = self._make_key(result, url)
         entry = self._seen.get(key)
         if entry and time.monotonic() < entry.expires_at:

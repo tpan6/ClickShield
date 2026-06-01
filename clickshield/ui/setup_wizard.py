@@ -184,8 +184,8 @@ class _ConfigPage(QWizardPage):
 
         # Scan interval
         self._interval_combo = QComboBox()
-        self._interval_combo.addItems(["15 seconds", "30 seconds (default)", "1 minute", "5 minutes"])
-        self._interval_combo.setCurrentIndex(1)
+        self._interval_combo.addItems(["5 seconds", "15 seconds", "30 seconds (default)", "1 minute", "5 minutes"])
+        self._interval_combo.setCurrentIndex(2)
         form.addRow("Scan interval:", self._interval_combo)
 
         # Sound
@@ -206,7 +206,7 @@ class _ConfigPage(QWizardPage):
         layout.addLayout(form)
 
     def apply_to(self, settings: AppSettings) -> None:
-        intervals = [15, 30, 60, 300]
+        intervals = [5, 15, 30, 60, 300]
         settings.scan_interval_seconds = intervals[self._interval_combo.currentIndex()]
         settings.sound_enabled = self._sound_cb.isChecked()
         settings.monitor_clipboard = self._clipboard_cb.isChecked()
@@ -270,9 +270,9 @@ class SettingsDialog(QDialog):
 
         # Scan interval
         self._interval_combo = QComboBox()
-        self._interval_combo.addItems(["15 seconds", "30 seconds", "1 minute", "5 minutes"])
-        interval_map = {15: 0, 30: 1, 60: 2, 300: 3}
-        self._interval_combo.setCurrentIndex(interval_map.get(self._settings.scan_interval_seconds, 1))
+        self._interval_combo.addItems(["5 seconds", "15 seconds", "30 seconds", "1 minute", "5 minutes"])
+        interval_map = {5: 0, 15: 1, 30: 2, 60: 3, 300: 4}
+        self._interval_combo.setCurrentIndex(interval_map.get(self._settings.scan_interval_seconds, 2))
         form.addRow("Scan interval:", self._interval_combo)
 
         # Sound
@@ -307,7 +307,7 @@ class SettingsDialog(QDialog):
         providers = ["openai", "openrouter"]
         self._settings.model_provider = providers[self._provider_combo.currentIndex()]
 
-        intervals = [15, 30, 60, 300]
+        intervals = [5, 15, 30, 60, 300]
         self._settings.scan_interval_seconds = intervals[self._interval_combo.currentIndex()]
         self._settings.sound_enabled = self._sound_cb.isChecked()
         self._settings.monitor_clipboard = self._clipboard_cb.isChecked()

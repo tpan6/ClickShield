@@ -106,6 +106,7 @@ class MonitorWorker(QThread):
             browser_info = self._url_capture.get_browser_info()
             url = browser_info.url
             browser_name = browser_info.browser_name
+            logger.debug("Browser detected: %s  url=%s", browser_name or "none", url or "N/A")
 
             clipboard_url: Optional[str] = None
             if self._settings.monitor_clipboard:
@@ -114,6 +115,11 @@ class MonitorWorker(QThread):
             page_html: Optional[str] = None
             if self._settings.fetch_page_html and url:
                 page_html = self._html_capture.fetch_page_text(url)
+                logger.info(
+                    "HTML captured: %d chars from %s",
+                    len(page_html) if page_html else 0,
+                    url,
+                )
 
             ts = datetime.now()
             request = AnalysisRequest(
