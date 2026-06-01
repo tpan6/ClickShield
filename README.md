@@ -55,6 +55,81 @@ A full-screen red overlay appears with an alert sound. Your mouse and keyboard a
 
 ---
 
+## Using ClickShield
+
+### Finding the Tray Icon
+
+ClickShield lives in the **Windows system tray** — the icon area at the right end of the taskbar. If you don't see it, click the **^** arrow to expand the hidden tray overflow area.
+
+The shield icon changes color to reflect the current state:
+
+| Icon color | Meaning |
+|---|---|
+| 🟢 Green | Idle — last scan was clean |
+| 🔵 Blue | Scanning in progress |
+| 🟠 Orange | Warning detected (low/medium threat) |
+| 🔴 Red | Danger detected (high threat) |
+
+---
+
+### Tray Menu
+
+**Right-click** the shield icon to open the menu:
+
+| Menu item | What it does |
+|---|---|
+| **Scan Now** | Triggers an immediate scan without waiting for the next interval |
+| **Pause Monitoring** | Stops all scanning and screenshot capture — useful when screen-sharing or doing online banking |
+| **Resume Monitoring** | Resumes scanning after a pause |
+| **Dashboard…** | Opens the scan history window showing every past scan |
+| **Settings…** | Opens the settings dialog to change your API key, scan interval, sounds, etc. |
+| **Quit** | Exits ClickShield completely |
+
+---
+
+### Pausing and Resuming
+
+To **pause**: right-click the tray icon → **Pause Monitoring**. The icon dims and all screenshot capture stops immediately.
+
+To **resume**: right-click → **Resume Monitoring**. Scanning picks up on the next interval.
+
+Pausing is recommended any time you're viewing sensitive information — banking, medical records, passwords — or screen-sharing with others.
+
+---
+
+### Triggering an Immediate Scan
+
+Don't want to wait for the next scheduled scan? Right-click the tray icon → **Scan Now**. The icon turns blue while the scan runs, then returns to its result color within a few seconds.
+
+---
+
+### Scan History Dashboard
+
+Right-click → **Dashboard…** to open the history window.
+
+- The table lists every scan with its time, URL, severity score, and threat type
+- Use the **filter buttons** (All / Threats / High / Medium / Low / Clean) to narrow the list
+- Click any row to see the full AI explanation, indicator bullets, raw model response, and a screenshot of what was on screen at the time
+- The dashboard **auto-refreshes** every 10 seconds while open
+- Click **Clear All** to delete all history and free disk space
+
+---
+
+### Changing Settings
+
+Right-click → **Settings…** to open the settings dialog. Changes take effect immediately — no restart needed.
+
+| Setting | Description |
+|---|---|
+| **OpenAI API Key** | Your key from platform.openai.com. Stored securely in Windows Credential Manager. |
+| **Provider** | OpenAI (default) or OpenRouter as a fallback |
+| **Scan interval** | How often ClickShield scans: 5 s / 15 s / 30 s / 1 min / 5 min |
+| **Sound alerts** | Play an alert sound on high-severity detections |
+| **Monitor clipboard** | Also check URLs you paste from the clipboard |
+| **Start with Windows** | Add ClickShield to Windows startup (HKCU registry, no admin needed) |
+
+---
+
 ## What It Detects
 
 | Threat Type | Examples |
@@ -132,30 +207,6 @@ The setup wizard will launch on first run.
 4. Copy the key (starts with `sk-`) and paste it into ClickShield's setup wizard
 
 **Cost estimate for typical home use:** GPT-5.4-nano is priced at ~$0.20 per million input tokens. A typical scan (screenshot + page text) costs well under $0.001. At the default 30-second scan interval with a browser open 4 hours/day, monthly cost is under $1.
-
----
-
-## Configuration
-
-Right-click the tray icon → **Settings** to adjust:
-
-| Setting | Options | Default |
-|---|---|---|
-| Scan interval | 15 s / 30 s / 1 min / 5 min | 30 s |
-| Sound alerts | On / Off | On |
-| Monitor clipboard | On / Off | On |
-| Fetch page HTML | On / Off | On |
-| API provider | OpenAI / OpenRouter | OpenAI |
-| Start with Windows | On / Off | Off |
-
-You can also **pause monitoring** from the tray menu (e.g., when screen sharing sensitive information), then resume it with one click.
-
-### Threat Thresholds
-
-By default:
-- Severity ≥ 1 → toast notification
-- Severity ≥ 4 → overlay dialog
-- Severity ≥ 7 → blocking overlay
 
 ---
 
