@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+
 from clickshield.core.scoring import ThreatResult
 
 logger = logging.getLogger(__name__)

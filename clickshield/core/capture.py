@@ -5,7 +5,6 @@ import hashlib
 import io
 import logging
 import re
-import time
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -65,9 +64,9 @@ class URLCapture:
 
     def get_active_browser_url(self) -> Optional[str]:
         try:
+            import psutil
             import win32gui
             import win32process
-            import psutil
 
             hwnd = win32gui.GetForegroundWindow()
             if not hwnd:

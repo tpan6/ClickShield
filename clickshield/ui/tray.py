@@ -16,11 +16,6 @@ from PyQt6.QtWidgets import (
 from clickshield.config.settings import AppSettings
 from clickshield.core.monitor import MonitorWorker
 from clickshield.core.scoring import ThreatLevel, ThreatResult
-from clickshield.utils.autostart import (
-    disable_autostart,
-    enable_autostart,
-    is_autostart_enabled,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +111,7 @@ class TrayApp(QApplication):
             return
 
         if level == ThreatLevel.LOW:
-            self._set_tray_icon("tray_warning.png", f"ClickShield — Low risk detected")
+            self._set_tray_icon("tray_warning.png", "ClickShield — Low risk detected")
             from clickshield.ui.toast import show_toast
             show_toast(result)
 

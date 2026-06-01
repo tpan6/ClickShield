@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (

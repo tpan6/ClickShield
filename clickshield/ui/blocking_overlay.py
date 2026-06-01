@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+
 from PyQt6.QtCore import QPoint, QRect, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QKeyEvent, QMouseEvent
 from PyQt6.QtWidgets import QApplication, QLabel, QPushButton, QVBoxLayout, QWidget

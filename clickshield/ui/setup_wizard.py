@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
-from PyQt6.QtCore import QThread, Qt, pyqtSignal
-from PyQt6.QtGui import QFont
+from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -15,7 +13,6 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
-    QSlider,
     QVBoxLayout,
     QWidget,
     QWizard,

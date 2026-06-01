@@ -7,7 +7,6 @@ import sys
 def main() -> None:
     # Parse CLI args before importing Qt (avoids PyQt consuming --help etc.)
     first_run = "--first-run" in sys.argv
-    minimized = "--minimized" in sys.argv
 
     from clickshield.config.settings import AppSettings
     from clickshield.utils.logger import setup_logging

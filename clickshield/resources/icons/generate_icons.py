@@ -1,6 +1,7 @@
 """Run this script once to generate placeholder tray icons."""
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
+
+from PIL import Image, ImageDraw
 
 ICONS = {
     "tray_normal.png":   (0x2E7D32, "S"),   # green
