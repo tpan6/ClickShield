@@ -1,0 +1,7 @@
+PyQt6>=6.7.0
+mss>=9.0.1
+Pillow>=10.4.0
+openai>=1.30.0
+pywin32>=308
+psutil>=6.0.0
+uiautomation>=2.0.18

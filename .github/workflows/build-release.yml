@@ -1,0 +1,34 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -e ".[build]"
+
+      - name: Build with PyInstaller
+        run: pyinstaller installer/clickshield.spec --noconfirm
+
+      - name: Upload portable build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClickShield-portable
+          path: dist/ClickShield/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/ClickShield/ClickShield.exe
+          generate_release_notes: true

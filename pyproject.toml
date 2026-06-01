@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clickshield"
+version = "0.1.0"
+description = "Local AI-powered anti-scam protection for Windows 11"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+readme = "README.md"
+
+dependencies = [
+    "PyQt6>=6.7.0",
+    "mss>=9.0.1",
+    "Pillow>=10.4.0",
+    "openai>=1.30.0",
+    "pywin32>=308",
+    "psutil>=6.0.0",
+    "uiautomation>=2.0.18",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-qt>=4.4.0",
+    "pytest-mock>=3.14.0",
+    "black>=24.0.0",
+    "ruff>=0.4.0",
+]
+build = [
+    "pyinstaller>=6.10.0",
+]
+
+[project.scripts]
+clickshield = "clickshield.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["clickshield*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
