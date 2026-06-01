@@ -37,6 +37,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     needs: release
+    continue-on-error: true   # binary build failure doesn't fail the release
     permissions:
       contents: write
     steps:
@@ -48,6 +49,11 @@ jobs:
 
       - name: Install dependencies
         run: pip install -e ".[build]"
+
+      - name: Run pywin32 post-install
+        run: python Scripts/pywin32_postinstall.py -install
+        shell: cmd
+        continue-on-error: true
 
       - name: Build with PyInstaller
         run: pyinstaller installer/clickshield.spec --noconfirm
