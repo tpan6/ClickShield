@@ -123,7 +123,7 @@ class TrayApp(QApplication):
         if level == ThreatLevel.LOW:
             self._set_tray_icon("tray_warning.png", "ClickShield — Low risk detected")
             from clickshield.ui.toast import show_toast
-            show_toast(result)
+            show_toast(result, tray=self._tray)
 
         elif level == ThreatLevel.MEDIUM:
             self._set_tray_icon("tray_warning.png", "ClickShield — Warning")
