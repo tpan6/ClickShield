@@ -90,7 +90,7 @@ class LLMAnalyzer:
                 model=self._model,
                 messages=messages,
                 temperature=0.1,
-                max_tokens=512,
+                max_completion_tokens=512,
             )
 
             raw = response.choices[0].message.content or ""

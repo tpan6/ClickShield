@@ -14,29 +14,28 @@ def main() -> None:
     settings = AppSettings.load()
     setup_logging(settings.log_file)
 
-    # Show first-run wizard if no API key exists yet
     from clickshield.utils.keystore import has_api_key
     needs_setup = first_run or not has_api_key()
 
-    from PyQt6.QtWidgets import QApplication
-
-    # Create app early so wizard can show
-    _app_check = QApplication.instance()
-    if _app_check is None:
-        _app_check = QApplication(sys.argv)
+    # TrayApp IS the QApplication — create it once here so there is exactly one.
+    from clickshield.ui.tray import TrayApp
+    app = TrayApp(settings, sys.argv)
 
     if needs_setup:
         from clickshield.ui.setup_wizard import FirstRunWizard
         wizard = FirstRunWizard(settings)
         result = wizard.exec()
         if result == 0:
-            # User cancelled wizard — exit
+            # User cancelled — exit
             sys.exit(0)
-        # Reload settings after wizard saved them
+        # Reload settings and restart monitor with the new API key
         settings = AppSettings.load()
+        app._settings = settings
+        if app._monitor:
+            app._monitor.stop()
+            app._monitor.wait(3000)
+        app._start_monitor()
 
-    from clickshield.ui.tray import TrayApp
-    app = TrayApp(settings, sys.argv)
     sys.exit(app.exec())
 
 

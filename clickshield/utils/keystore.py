@@ -33,7 +33,11 @@ def load_api_key() -> Optional[str]:
     try:
         import win32cred
         cred = win32cred.CredRead(_TARGET_NAME, win32cred.CRED_TYPE_GENERIC)
-        return cred["CredentialBlob"]
+        blob = cred["CredentialBlob"]
+        # win32cred returns CredentialBlob as UTF-16LE bytes on Windows
+        if isinstance(blob, bytes):
+            return blob.decode("utf-16-le").rstrip("\x00")
+        return blob
     except Exception:
         return None
 
