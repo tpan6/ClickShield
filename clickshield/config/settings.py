@@ -33,6 +33,9 @@ class AppSettings:
     overlay_opacity: float = defaults.OVERLAY_OPACITY
     sound_enabled: bool = defaults.SOUND_ENABLED
 
+    # Analysis
+    fetch_page_html: bool = defaults.FETCH_PAGE_HTML
+
     # System
     autostart: bool = defaults.AUTOSTART
 

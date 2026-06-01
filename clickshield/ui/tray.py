@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 from clickshield.config.settings import AppSettings
+from clickshield.core.history import HistoryStore
 from clickshield.core.monitor import MonitorWorker
 from clickshield.core.scoring import ThreatLevel, ThreatResult
 
@@ -39,9 +40,11 @@ class TrayApp(QApplication):
         self.setApplicationVersion("0.1.0")
 
         self._settings = settings
+        self._history = HistoryStore()
         self._monitor: MonitorWorker | None = None
         self._tray: QSystemTrayIcon | None = None
         self._active_overlay = None   # holds a reference to prevent GC
+        self._dashboard = None        # holds reference to open dashboard window
 
         self._setup_tray()
         self._start_monitor()
@@ -64,6 +67,12 @@ class TrayApp(QApplication):
         self._pause_action.setCheckable(True)
         self._pause_action.triggered.connect(self._on_toggle_pause)
         menu.addAction(self._pause_action)
+
+        menu.addSeparator()
+
+        dashboard_action = QAction("Dashboard…", self)
+        dashboard_action.triggered.connect(self._on_dashboard)
+        menu.addAction(dashboard_action)
 
         menu.addSeparator()
 
@@ -93,8 +102,9 @@ class TrayApp(QApplication):
     # Monitor lifecycle
 
     def _start_monitor(self) -> None:
-        self._monitor = MonitorWorker(self._settings)
+        self._monitor = MonitorWorker(self._settings, self._history)
         self._monitor.analysis_complete.connect(self._on_analysis_complete)
+        self._monitor.scan_record_added.connect(self._on_scan_record_added)
         self._monitor.status_changed.connect(self._on_status_changed)
         self._monitor.scan_failed.connect(self._on_scan_failed)
         self._monitor.start()
@@ -143,6 +153,10 @@ class TrayApp(QApplication):
         name, tip = icons.get(status, ("tray_normal.png", "ClickShield"))
         self._set_tray_icon(name, tip)
 
+    def _on_scan_record_added(self, record) -> None:
+        if self._dashboard is not None:
+            self._dashboard.add_record(record)
+
     def _on_scan_failed(self, msg: str) -> None:
         logger.warning("Scan failed: %s", msg)
         if "API key" in msg:
@@ -166,6 +180,18 @@ class TrayApp(QApplication):
         else:
             self._monitor.resume()
             self._pause_action.setText("Pause Monitoring")
+
+    def _on_dashboard(self) -> None:
+        from clickshield.ui.dashboard import DashboardWindow
+        if self._dashboard is None:
+            self._dashboard = DashboardWindow(self._history)
+            self._dashboard.closed.connect(self._on_dashboard_closed)
+        self._dashboard.show()
+        self._dashboard.raise_()
+        self._dashboard.activateWindow()
+
+    def _on_dashboard_closed(self) -> None:
+        self._dashboard = None
 
     def _on_settings(self) -> None:
         from clickshield.ui.setup_wizard import SettingsDialog
@@ -192,8 +218,8 @@ class TrayApp(QApplication):
             "About ClickShield",
             "<b>ClickShield v0.1.0</b><br><br>"
             "Real-time AI-powered anti-scam protection.<br><br>"
-            "Screenshots are analyzed by Qwen 3.7-plus (Alibaba Cloud DashScope).<br>"
-            "No screenshots are stored or shared beyond the analysis request.<br><br>"
+            "Screenshots are analyzed by GPT-5.4-nano (OpenAI).<br>"
+            "No screenshots are stored on ClickShield servers.<br><br>"
             "<i>Stay safe online.</i>",
         )
 

@@ -9,7 +9,8 @@ from PyQt6.QtCore import QThread, pyqtSignal
 
 from clickshield.config.settings import AppSettings
 from clickshield.core.analyzer import AnalysisRequest, LLMAnalyzer
-from clickshield.core.capture import ClipboardMonitor, ScreenCapture, URLCapture
+from clickshield.core.capture import ClipboardMonitor, HTMLCapture, ScreenCapture, URLCapture
+from clickshield.core.history import HistoryStore, ScanRecord
 from clickshield.core.scoring import ThreatResult, ThreatSuppressor
 from clickshield.utils.keystore import load_api_key
 
@@ -23,13 +24,15 @@ class MonitorWorker(QThread):
     """
 
     analysis_complete = pyqtSignal(object)   # ThreatResult
+    scan_record_added = pyqtSignal(object)   # ScanRecord
     scan_started = pyqtSignal()
     scan_failed = pyqtSignal(str)
     status_changed = pyqtSignal(str)         # "idle" | "scanning" | "paused" | "error"
 
-    def __init__(self, settings: AppSettings):
+    def __init__(self, settings: AppSettings, history_store: HistoryStore):
         super().__init__()
         self._settings = settings
+        self._history = history_store
         self._paused = False
         self._stop_flag = False
         self._immediate_scan = False
@@ -37,6 +40,7 @@ class MonitorWorker(QThread):
         self._screen = ScreenCapture()
         self._url_capture = URLCapture()
         self._clipboard = ClipboardMonitor()
+        self._html_capture = HTMLCapture()
         self._suppressor = ThreatSuppressor(ttl_seconds=300)
         self._analyzer: Optional[LLMAnalyzer] = None
 
@@ -99,17 +103,26 @@ class MonitorWorker(QThread):
                 self.status_changed.emit("idle")
                 return
 
-            url = self._url_capture.get_active_browser_url()
+            browser_info = self._url_capture.get_browser_info()
+            url = browser_info.url
+            browser_name = browser_info.browser_name
 
             clipboard_url: Optional[str] = None
             if self._settings.monitor_clipboard:
                 clipboard_url = self._clipboard.get_clipboard_url()
 
+            page_html: Optional[str] = None
+            if self._settings.fetch_page_html and url:
+                page_html = self._html_capture.fetch_page_text(url)
+
+            ts = datetime.now()
             request = AnalysisRequest(
                 screenshot_b64=screenshot_b64,
                 url=url,
                 clipboard_url=clipboard_url,
-                timestamp=datetime.now(),
+                browser_name=browser_name,
+                page_html=page_html,
+                timestamp=ts,
             )
 
             result: ThreatResult = analyzer.analyze(request)
@@ -119,6 +132,16 @@ class MonitorWorker(QThread):
                 result.threat_type,
                 url or "N/A",
             )
+
+            record = ScanRecord.from_result(
+                result=result,
+                url=url,
+                browser_name=browser_name,
+                screenshot_b64=screenshot_b64,
+                ts=ts,
+            )
+            self._history.add(record)
+            self.scan_record_added.emit(record)
 
             if not self._suppressor.should_suppress(result, url):
                 self.analysis_complete.emit(result)

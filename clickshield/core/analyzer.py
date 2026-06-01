@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 _PROMPT_PATH = Path(__file__).parent.parent / "resources" / "prompts" / "scam_analysis.txt"
 _SYSTEM_PROMPT: str | None = None
+_HTML_CHAR_LIMIT = 3000  # max page text chars sent to the model
 
 
 def _load_system_prompt() -> str:
@@ -26,29 +27,27 @@ def _load_system_prompt() -> str:
 
 @dataclass
 class AnalysisRequest:
-    screenshot_b64: str           # Base64-encoded JPEG
-    url: str | None               # Active browser URL
-    clipboard_url: str | None     # Recently pasted URL from clipboard
-    timestamp: datetime = None
-
-    def __post_init__(self):
-        if self.timestamp is None:
-            self.timestamp = datetime.now()
+    screenshot_b64: str               # Base64-encoded JPEG
+    url: str | None                   # Active browser URL
+    clipboard_url: str | None         # Recently pasted URL from clipboard
+    browser_name: str | None = None   # Detected browser (e.g. "Google Chrome")
+    page_html: str | None = None      # Stripped text content of the active page
+    timestamp: datetime = field(default_factory=datetime.now)
 
 
 class LLMAnalyzer:
-    """Sends screenshots to Qwen 3.7-plus via DashScope's OpenAI-compatible API."""
+    """Sends screenshots (+ page HTML) to GPT-5.4-nano via the OpenAI API."""
 
-    DASHSCOPE_BASE = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    OPENAI_BASE = "https://api.openai.com/v1"
     OPENROUTER_BASE = "https://openrouter.ai/api/v1"
-    MODEL_DASHSCOPE = "qwen-vl-plus"
-    MODEL_OPENROUTER = "qwen/qwen3.7-plus"
+    MODEL_OPENAI = "gpt-5.4-nano"
+    MODEL_OPENROUTER = "openai/gpt-5.4-nano"
 
     def __init__(
         self,
         api_key: str,
         timeout: int = 30,
-        provider: str = "dashscope",
+        provider: str = "openai",
     ):
         self._timeout = timeout
         self._provider = provider
@@ -57,8 +56,8 @@ class LLMAnalyzer:
             base_url = self.OPENROUTER_BASE
             model = self.MODEL_OPENROUTER
         else:
-            base_url = self.DASHSCOPE_BASE
-            model = self.MODEL_DASHSCOPE
+            base_url = self.OPENAI_BASE
+            model = self.MODEL_OPENAI
 
         self._model = model
         self._client = OpenAI(
@@ -68,23 +67,23 @@ class LLMAnalyzer:
         )
 
     def analyze(self, request: AnalysisRequest) -> ThreatResult:
-        """Synchronous call — must be called from a background thread, not the Qt main thread."""
+        """Synchronous — call from a background thread, never the Qt main thread."""
         try:
             user_text = self._build_user_text(request)
+            content: list[dict] = [{"type": "text", "text": user_text}]
+
+            if request.screenshot_b64:
+                content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{request.screenshot_b64}",
+                        "detail": "low",   # low detail = faster + cheaper for classification
+                    },
+                })
+
             messages = [
                 {"role": "system", "content": _load_system_prompt()},
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": user_text},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{request.screenshot_b64}"
-                            },
-                        },
-                    ],
-                },
+                {"role": "user", "content": content},
             ]
 
             response = self._client.chat.completions.create(
@@ -106,7 +105,6 @@ class LLMAnalyzer:
             return ThreatResult.error(str(exc))
 
     def is_available(self) -> bool:
-        """Quick health check — tries listing models."""
         try:
             self._client.models.list()
             return True
@@ -116,12 +114,22 @@ class LLMAnalyzer:
     # ------------------------------------------------------------------
 
     def _build_user_text(self, request: AnalysisRequest) -> str:
-        url_line = f"ACTIVE URL: {request.url}" if request.url else "ACTIVE URL: Unknown (no browser active)"
-        clip_line = f"CLIPBOARD URL: {request.clipboard_url}" if request.clipboard_url else "CLIPBOARD URL: None"
-        return f"{url_line}\n{clip_line}\nTIMESTAMP: {request.timestamp.isoformat()}\n\nAnalyze the screenshot for scam or phishing threats."
+        lines = []
+        lines.append(f"ACTIVE URL: {request.url or 'Unknown (no browser active)'}")
+        lines.append(f"BROWSER: {request.browser_name or 'Unknown'}")
+        lines.append(f"CLIPBOARD URL: {request.clipboard_url or 'None'}")
+        lines.append(f"TIMESTAMP: {request.timestamp.isoformat()}")
+
+        if request.page_html:
+            lines.append("")
+            lines.append("PAGE TEXT CONTENT (stripped HTML):")
+            lines.append(request.page_html[:_HTML_CHAR_LIMIT])
+
+        lines.append("")
+        lines.append("Analyze the screenshot and page content for scam or phishing threats.")
+        return "\n".join(lines)
 
     def _parse_response(self, raw: str) -> ThreatResult:
-        # Try extracting JSON from a code block first, then raw text
         json_str = self._extract_json(raw)
         if json_str:
             try:
@@ -138,7 +146,6 @@ class LLMAnalyzer:
             except (json.JSONDecodeError, KeyError, ValueError) as exc:
                 logger.warning("JSON parse failed: %s. Falling back to regex.", exc)
 
-        # Regex fallback
         severity = self._regex_int(raw, r'"severity"\s*:\s*(\d+)', default=0)
         confidence = self._regex_float(raw, r'"confidence"\s*:\s*([\d.]+)', default=0.5)
         threat_type = self._regex_str(raw, r'"threat_type"\s*:\s*"([^"]+)"', default="unknown")
@@ -155,11 +162,9 @@ class LLMAnalyzer:
 
     @staticmethod
     def _extract_json(text: str) -> str | None:
-        # Match ```json ... ``` blocks
         m = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
         if m:
             return m.group(1)
-        # Match bare { ... } spanning multiple lines
         m = re.search(r"(\{[^{}]*\})", text, re.DOTALL)
         if m:
             return m.group(1)

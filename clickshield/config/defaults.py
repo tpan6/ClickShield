@@ -1,6 +1,7 @@
 SCAN_INTERVAL_SECONDS = 30
 REQUEST_TIMEOUT = 30
-MODEL_PROVIDER = "dashscope"        # "dashscope" or "openrouter"
+MODEL_PROVIDER = "openai"           # "openai" or "openrouter"
+MODEL_NAME = "gpt-5.4-nano"
 LOW_THRESHOLD = 1
 MEDIUM_THRESHOLD = 4
 HIGH_THRESHOLD = 7
@@ -8,3 +9,4 @@ OVERLAY_OPACITY = 0.92
 SOUND_ENABLED = True
 MONITOR_CLIPBOARD = True
 AUTOSTART = False
+FETCH_PAGE_HTML = True             # fetch HTML of active URL for richer analysis

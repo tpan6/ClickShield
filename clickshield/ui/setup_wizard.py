@@ -83,11 +83,11 @@ class _WelcomePage(QWizardPage):
         pb_layout = QVBoxLayout(privacy_box)
         privacy_lbl = QLabel(
             "To analyze threats, ClickShield takes periodic <b>screenshots</b> of "
-            "your screen and sends them to <b>Alibaba Cloud (DashScope)</b> for "
-            "AI analysis using Qwen 3.7-plus.<br><br>"
+            "your screen and sends them to <b>OpenAI</b> for "
+            "AI analysis using GPT-5.4-nano.<br><br>"
             "Screenshots are <b>not stored</b> on ClickShield servers. "
-            "They are processed by Alibaba Cloud per their "
-            "<a href='https://www.alibabacloud.com/help/en/model-studio/'>privacy policy</a>.<br><br>"
+            "They are processed by OpenAI per their "
+            "<a href='https://openai.com/policies/privacy-policy'>privacy policy</a>.<br><br>"
             "By continuing, you acknowledge and accept this."
         )
         privacy_lbl.setWordWrap(True)
@@ -103,19 +103,19 @@ class _WelcomePage(QWizardPage):
 class _ApiKeyPage(QWizardPage):
     def __init__(self):
         super().__init__()
-        self.setTitle("DashScope API Key")
+        self.setTitle("OpenAI API Key")
         self.setSubTitle(
-            "ClickShield uses Qwen 3.7-plus on Alibaba Cloud DashScope. "
-            "Get a free API key at dashscope-intl.aliyuncs.com."
+            "ClickShield uses GPT-5.4-nano via the OpenAI API. "
+            "Get an API key at platform.openai.com."
         )
         self._valid = False
 
         layout = QVBoxLayout(self)
 
-        get_key_btn = QPushButton("Get a free API key →")
+        get_key_btn = QPushButton("Get an API key →")
         get_key_btn.setFlat(True)
         get_key_btn.setStyleSheet("color: #1976d2; text-decoration: underline;")
-        get_key_btn.clicked.connect(self._open_dashscope)
+        get_key_btn.clicked.connect(self._open_openai)
         layout.addWidget(get_key_btn)
 
         form = QFormLayout()
@@ -168,9 +168,9 @@ class _ApiKeyPage(QWizardPage):
             self._status_lbl.setStyleSheet("color: red;")
 
     @staticmethod
-    def _open_dashscope() -> None:
+    def _open_openai() -> None:
         import webbrowser
-        webbrowser.open("https://dashscope-intl.aliyuncs.com/")
+        webbrowser.open("https://platform.openai.com/api-keys")
 
 
 class _ConfigPage(QWizardPage):
@@ -225,7 +225,7 @@ class _TestConnectionWorker(QThread):
             from openai import OpenAI
             client = OpenAI(
                 api_key=self._key,
-                base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+                base_url="https://api.openai.com/v1",
                 timeout=10,
             )
             client.models.list()
@@ -259,11 +259,11 @@ class SettingsDialog(QDialog):
         if existing:
             self._key_edit.setText(existing)
         self._key_edit.setPlaceholderText("sk-...")
-        form.addRow("DashScope API Key:", self._key_edit)
+        form.addRow("OpenAI API Key:", self._key_edit)
 
         # Provider
         self._provider_combo = QComboBox()
-        self._provider_combo.addItems(["DashScope (Alibaba Cloud)", "OpenRouter"])
+        self._provider_combo.addItems(["OpenAI", "OpenRouter"])
         idx = 1 if self._settings.model_provider == "openrouter" else 0
         self._provider_combo.setCurrentIndex(idx)
         form.addRow("Provider:", self._provider_combo)
@@ -304,7 +304,7 @@ class SettingsDialog(QDialog):
         if key:
             save_api_key(key)
 
-        providers = ["dashscope", "openrouter"]
+        providers = ["openai", "openrouter"]
         self._settings.model_provider = providers[self._provider_combo.currentIndex()]
 
         intervals = [15, 30, 60, 300]

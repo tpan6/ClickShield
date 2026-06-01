@@ -1,7 +1,6 @@
 import json
-import pytest
-from unittest.mock import MagicMock, patch
-from clickshield.core.analyzer import LLMAnalyzer, AnalysisRequest
+
+from clickshield.core.analyzer import AnalysisRequest, LLMAnalyzer
 from clickshield.core.scoring import ThreatLevel
 
 

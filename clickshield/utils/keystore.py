@@ -5,7 +5,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-_TARGET_NAME = "ClickShield/DashScopeAPIKey"
+_TARGET_NAME = "ClickShield/OpenAIAPIKey"
 
 
 def save_api_key(key: str) -> bool:

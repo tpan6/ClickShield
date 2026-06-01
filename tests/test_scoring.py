@@ -1,5 +1,5 @@
 import time
-import pytest
+
 from clickshield.core.scoring import (
     ThreatLevel,
     ThreatResult,
